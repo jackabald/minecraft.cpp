@@ -55,3 +55,13 @@ void Window::close() {
         glfwSetWindowShouldClose(m_window, GLFW_TRUE);
     }
 }
+
+bool Window::isKeyPressed(int key) const {
+    if (!m_window) return false;
+    return glfwGetKey(m_window, key) == GLFW_PRESS;
+}
+
+bool Window::isKeyDown(int key) const {
+    if (!m_window) return false;
+    return glfwGetKey(m_window, key) == GLFW_PRESS || glfwGetKey(m_window, key) == GLFW_REPEAT;
+}

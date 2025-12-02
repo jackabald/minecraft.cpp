@@ -12,6 +12,10 @@ public:
     void update();
     void swapBuffers();
     void close();
+    
+    // Input methods
+    bool isKeyPressed(int key) const;
+    bool isKeyDown(int key) const;
 
 private:
     GLFWwindow* m_window;
