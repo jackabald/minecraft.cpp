@@ -37,10 +37,9 @@ bool Window::isOpen() const {
 }
 
 void Window::update() {
-    // Render here
-    glClear(GL_COLOR_BUFFER_BIT);
-    
-    // Poll for and process events
+    // Only poll for and process events here. Clearing the frame buffer
+    // should be done by the renderer so we don't erase rendered content
+    // after drawing.
     glfwPollEvents();
 }
 
