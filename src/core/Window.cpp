@@ -3,6 +3,9 @@
 
 Window::Window(int width, int height, const std::string& title)
     : m_window(nullptr), m_width(width), m_height(height), m_title(title) {
+    m_firstMouse = true;
+    m_lastMouseX = width / 2.0;
+    m_lastMouseY = height / 2.0;
     init();
 }
 
@@ -63,4 +66,27 @@ bool Window::isKeyPressed(int key) const {
 bool Window::isKeyDown(int key) const {
     if (!m_window) return false;
     return glfwGetKey(m_window, key) == GLFW_PRESS || glfwGetKey(m_window, key) == GLFW_REPEAT;
+}
+
+void Window::enableRawMouse(bool enabled) {
+    if (!m_window) return;
+    glfwSetInputMode(m_window, GLFW_CURSOR, enabled ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+    m_firstMouse = true; // reset so next delta is zero
+}
+
+std::pair<double, double> Window::getMouseDelta() {
+    if (!m_window) return {0.0, 0.0};
+    double xpos, ypos;
+    glfwGetCursorPos(m_window, &xpos, &ypos);
+    if (m_firstMouse) {
+        m_lastMouseX = xpos;
+        m_lastMouseY = ypos;
+        m_firstMouse = false;
+        return {0.0, 0.0};
+    }
+    double dx = xpos - m_lastMouseX;
+    double dy = m_lastMouseY - ypos; // invert Y
+    m_lastMouseX = xpos;
+    m_lastMouseY = ypos;
+    return {dx, dy};
 }

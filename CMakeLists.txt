@@ -37,6 +37,7 @@ add_executable(minecraft_cpp
     src/main.cpp
     src/core/Window.cpp
     src/core/Renderer.cpp
+    src/core/Camera.cpp
 )
 
 target_link_libraries(minecraft_cpp glfw OpenGL::GL glm glad)
