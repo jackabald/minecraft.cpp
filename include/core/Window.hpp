@@ -13,13 +13,13 @@ public:
     void swapBuffers();
     void close();
     
-    // Input methods
+    // Keyboard input
     bool isKeyPressed(int key) const;
     bool isKeyDown(int key) const;
     
-    // Mouse / cursor
+    // Mouse stuff
     void enableRawMouse(bool enabled);
-    // Returns mouse delta (dx, dy) since last call
+    // Returns how much the mouse moved (dx, dy) since last call
     std::pair<double, double> getMouseDelta();
 
 private:
@@ -27,7 +27,7 @@ private:
     int m_width;
     int m_height;
     std::string m_title;
-    // Mouse tracking
+    // Track mouse position between frames
     double m_lastMouseX;
     double m_lastMouseY;
     bool m_firstMouse;

@@ -1,6 +1,7 @@
 #include "core/Renderer.hpp"
 #include "core/Window.hpp"
 #include "core/Camera.hpp"
+#include "world/World.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <chrono>
 #include <iostream>
@@ -13,13 +14,16 @@ int main() {
     renderer.init(800, 600);
 
     // Setup 3D perspective
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 1000.0f);
     renderer.setProjectionMatrix(projection);
 
     // Camera setup
-    Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+    Camera camera(glm::vec3(8.0f, 100.0f, 8.0f)); // Start above the terrain
     renderer.setViewMatrix(camera.getViewMatrix());
     window.enableRawMouse(true);
+
+    // World setup
+    World world(42); // Seed for terrain generation
 
     // Timing
     using clock = std::chrono::high_resolution_clock;
@@ -47,10 +51,13 @@ int main() {
         auto [dx, dy] = window.getMouseDelta();
         if (dx != 0.0 || dy != 0.0) camera.processMouse((float)dx, (float)dy);
 
+        // Update world (load/unload chunks around camera)
+        world.update(camera.getPosition(), 4);
+
         // Render
         renderer.clear();
         renderer.setViewMatrix(camera.getViewMatrix());
-        renderer.drawCube(glm::vec3(0.0f, 0.0f, 0.0f));
+        world.render(renderer.getShaderProgram());
 
         window.update();
         window.swapBuffers();

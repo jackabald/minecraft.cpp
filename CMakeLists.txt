@@ -38,6 +38,8 @@ add_executable(minecraft_cpp
     src/core/Window.cpp
     src/core/Renderer.cpp
     src/core/Camera.cpp
+    src/world/Chunk.cpp
+    src/world/World.cpp
 )
 
 target_link_libraries(minecraft_cpp glfw OpenGL::GL glm glad)

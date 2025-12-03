@@ -14,6 +14,9 @@ public:
     void drawCube(glm::vec3 position);
     void setViewMatrix(glm::mat4 view);
     void setProjectionMatrix(glm::mat4 projection);
+    
+    // Get the shader program (useful for external rendering like chunks)
+    GLuint getShaderProgram() const { return shaderProgram; }
 
 private:
     GLuint VAO, VBO, EBO;
