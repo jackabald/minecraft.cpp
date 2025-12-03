@@ -10,7 +10,7 @@ Users on Linux systems using the Xorg display server can resolve this issue by d
     ```bash
     xinput list
     ```
-    (Note the ID of the touchpad device, e.g., `17`)
+    (Note the ID of the touchpad device, e.g., `11`)
 
 2.  **Disable the "Disable While Typing" feature:**
     ```bash
