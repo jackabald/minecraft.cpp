@@ -23,7 +23,7 @@ struct BlockData {
 
 namespace BlockDB {
     inline const BlockData& get(BlockType type) {
-        static const std::array<BlockData, static_cast<size_t>(BlockType::COUNT)> data = {{
+        static const std::array<BlockData, static_cast<std::size_t>(BlockType::COUNT)> data = {{
             { false, true,  {0.0f,  0.0f,  0.0f } },  // AIR
             { true,  false, {0.5f,  0.5f,  0.5f } },  // STONE
             { true,  false, {0.55f, 0.36f, 0.23f} },  // DIRT
@@ -33,7 +33,7 @@ namespace BlockDB {
             { true,  false, {0.55f, 0.35f, 0.15f} },  // WOOD
             { true,  false, {0.1f,  0.6f,  0.1f } },  // LEAVES
         }};
-        return data[static_cast<size_t>(type)];
+        return data[static_cast<std::size_t>(type)];
     }
 }
 
