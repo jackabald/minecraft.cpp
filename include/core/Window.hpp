@@ -22,6 +22,10 @@ public:
     // Returns how much the mouse moved (dx, dy) since last call
     std::pair<double, double> getMouseDelta();
 
+    GLFWwindow* getGLFWwindow() const { return m_window; }
+    int getWidth() const { return m_width; }
+    int getHeight() const { return m_height; }
+
 private:
     GLFWwindow* m_window;
     int m_width;

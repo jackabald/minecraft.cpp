@@ -59,98 +59,101 @@ void Chunk::generateMesh() {
     std::vector<float> vertices; // Position (x,y,z) + Color (r,g,b) = 6 floats per vertex
     std::vector<unsigned int> indices;
 
-    // Helper lambda to get color for a block type
-    auto getBlockColor = [](BlockType type) -> std::array<float, 3> {
-        switch (type) {
-            case BlockType::STONE: return {0.5f, 0.5f, 0.5f};   // Gray
-            case BlockType::DIRT:  return {0.55f, 0.36f, 0.23f}; // Brown
-            case BlockType::GRASS: return {0.2f, 0.8f, 0.2f};    // Green
-            case BlockType::AIR:
-            default:               return {1.0f, 1.0f, 1.0f};    // White (shouldn't render)
+    // Face color for a block — grass gets different colors per face
+    auto getFaceColor = [](BlockType type, int face) -> std::array<float, 3> {
+        const auto& data = BlockDB::get(type);
+        if (type == BlockType::GRASS) {
+            if (face == 5) return {0.2f, 0.8f, 0.2f};       // top: green
+            if (face == 4) return {0.55f, 0.36f, 0.23f};     // bottom: dirt
+            return {0.45f, 0.6f, 0.2f};                       // sides: greenish-brown
         }
+        return {data.color[0], data.color[1], data.color[2]};
     };
 
-    // Iterate through all blocks in the chunk
+    // Helper to emit a face quad (4 verts, 6 indices)
+    auto addFace = [&](float x0, float y0, float z0,
+                       float x1, float y1, float z1,
+                       float x2, float y2, float z2,
+                       float x3, float y3, float z3,
+                       const std::array<float, 3>& color) {
+        unsigned int base = vertices.size() / 6;
+        // 4 vertices
+        float verts[] = { x0,y0,z0, x1,y1,z1, x2,y2,z2, x3,y3,z3 };
+        for (int i = 0; i < 4; ++i) {
+            vertices.push_back(verts[i*3]);
+            vertices.push_back(verts[i*3+1]);
+            vertices.push_back(verts[i*3+2]);
+            vertices.push_back(color[0]);
+            vertices.push_back(color[1]);
+            vertices.push_back(color[2]);
+        }
+        // 2 triangles (CCW winding)
+        indices.push_back(base);
+        indices.push_back(base + 1);
+        indices.push_back(base + 2);
+        indices.push_back(base + 2);
+        indices.push_back(base + 3);
+        indices.push_back(base);
+    };
+
+    // Iterate through all blocks — only emit faces adjacent to non-solid blocks
     for (int y = 0; y < HEIGHT; ++y) {
         for (int z = 0; z < DEPTH; ++z) {
             for (int x = 0; x < WIDTH; ++x) {
-                if (!isBlockVisible(x, y, z)) continue;
-
                 BlockType blockType = getBlock(x, y, z);
-                auto color = getBlockColor(blockType);
+                if (!isSolid(blockType)) continue;
 
-                // Get world position of this block's corner
-                float wx = m_chunkX * WIDTH + x;
-                float wy = y;
-                float wz = m_chunkZ * DEPTH + z;
+                float wx = static_cast<float>(m_chunkX * WIDTH + x);
+                float wy = static_cast<float>(y);
+                float wz = static_cast<float>(m_chunkZ * DEPTH + z);
 
-                unsigned int baseIndex = vertices.size() / 6; // 6 floats per vertex now
-
-                // Add cube vertices (8 vertices per cube) with position + color
-                // Front face (z+)
-                for (int i = 0; i < 4; ++i) {
-                    vertices.push_back((i == 0 || i == 3) ? wx - 0.5f : wx + 0.5f);
-                    vertices.push_back((i < 2) ? wy - 0.5f : wy + 0.5f);
-                    vertices.push_back(wz + 0.5f);
-                    vertices.push_back(color[0]);
-                    vertices.push_back(color[1]);
-                    vertices.push_back(color[2]);
+                // -X face
+                if (!isNeighborSolid(x - 1, y, z)) {
+                    auto c = getFaceColor(blockType, 0);
+                    addFace(wx-0.5f, wy-0.5f, wz-0.5f,
+                            wx-0.5f, wy-0.5f, wz+0.5f,
+                            wx-0.5f, wy+0.5f, wz+0.5f,
+                            wx-0.5f, wy+0.5f, wz-0.5f, c);
                 }
-                // Back face (z-)
-                for (int i = 0; i < 4; ++i) {
-                    vertices.push_back((i == 0 || i == 3) ? wx - 0.5f : wx + 0.5f);
-                    vertices.push_back((i < 2) ? wy - 0.5f : wy + 0.5f);
-                    vertices.push_back(wz - 0.5f);
-                    vertices.push_back(color[0]);
-                    vertices.push_back(color[1]);
-                    vertices.push_back(color[2]);
+                // +X face
+                if (!isNeighborSolid(x + 1, y, z)) {
+                    auto c = getFaceColor(blockType, 1);
+                    addFace(wx+0.5f, wy-0.5f, wz+0.5f,
+                            wx+0.5f, wy-0.5f, wz-0.5f,
+                            wx+0.5f, wy+0.5f, wz-0.5f,
+                            wx+0.5f, wy+0.5f, wz+0.5f, c);
                 }
-                // Left face (x-)
-                for (int i = 0; i < 4; ++i) {
-                    vertices.push_back(wx - 0.5f);
-                    vertices.push_back((i < 2) ? wy - 0.5f : wy + 0.5f);
-                    vertices.push_back((i == 0 || i == 3) ? wz - 0.5f : wz + 0.5f);
-                    vertices.push_back(color[0]);
-                    vertices.push_back(color[1]);
-                    vertices.push_back(color[2]);
+                // -Z face
+                if (!isNeighborSolid(x, y, z - 1)) {
+                    auto c = getFaceColor(blockType, 2);
+                    addFace(wx+0.5f, wy-0.5f, wz-0.5f,
+                            wx-0.5f, wy-0.5f, wz-0.5f,
+                            wx-0.5f, wy+0.5f, wz-0.5f,
+                            wx+0.5f, wy+0.5f, wz-0.5f, c);
                 }
-                // Right face (x+)
-                for (int i = 0; i < 4; ++i) {
-                    vertices.push_back(wx + 0.5f);
-                    vertices.push_back((i < 2) ? wy - 0.5f : wy + 0.5f);
-                    vertices.push_back((i == 0 || i == 3) ? wz - 0.5f : wz + 0.5f);
-                    vertices.push_back(color[0]);
-                    vertices.push_back(color[1]);
-                    vertices.push_back(color[2]);
+                // +Z face
+                if (!isNeighborSolid(x, y, z + 1)) {
+                    auto c = getFaceColor(blockType, 3);
+                    addFace(wx-0.5f, wy-0.5f, wz+0.5f,
+                            wx+0.5f, wy-0.5f, wz+0.5f,
+                            wx+0.5f, wy+0.5f, wz+0.5f,
+                            wx-0.5f, wy+0.5f, wz+0.5f, c);
                 }
-                // Bottom face (y-)
-                for (int i = 0; i < 4; ++i) {
-                    vertices.push_back((i == 0 || i == 3) ? wx - 0.5f : wx + 0.5f);
-                    vertices.push_back(wy - 0.5f);
-                    vertices.push_back((i < 2) ? wz - 0.5f : wz + 0.5f);
-                    vertices.push_back(color[0]);
-                    vertices.push_back(color[1]);
-                    vertices.push_back(color[2]);
+                // -Y face (bottom)
+                if (!isNeighborSolid(x, y - 1, z)) {
+                    auto c = getFaceColor(blockType, 4);
+                    addFace(wx-0.5f, wy-0.5f, wz+0.5f,
+                            wx-0.5f, wy-0.5f, wz-0.5f,
+                            wx+0.5f, wy-0.5f, wz-0.5f,
+                            wx+0.5f, wy-0.5f, wz+0.5f, c);
                 }
-                // Top face (y+)
-                for (int i = 0; i < 4; ++i) {
-                    vertices.push_back((i == 0 || i == 3) ? wx - 0.5f : wx + 0.5f);
-                    vertices.push_back(wy + 0.5f);
-                    vertices.push_back((i < 2) ? wz - 0.5f : wz + 0.5f);
-                    vertices.push_back(color[0]);
-                    vertices.push_back(color[1]);
-                    vertices.push_back(color[2]);
-                }
-
-                // Add indices for 6 faces (2 triangles per face, 3 indices each)
-                for (int face = 0; face < 6; ++face) {
-                    unsigned int faceStart = baseIndex + face * 4;
-                    indices.push_back(faceStart);
-                    indices.push_back(faceStart + 1);
-                    indices.push_back(faceStart + 2);
-                    indices.push_back(faceStart + 2);
-                    indices.push_back(faceStart + 3);
-                    indices.push_back(faceStart);
+                // +Y face (top)
+                if (!isNeighborSolid(x, y + 1, z)) {
+                    auto c = getFaceColor(blockType, 5);
+                    addFace(wx-0.5f, wy+0.5f, wz-0.5f,
+                            wx+0.5f, wy+0.5f, wz-0.5f,
+                            wx+0.5f, wy+0.5f, wz+0.5f,
+                            wx-0.5f, wy+0.5f, wz+0.5f, c);
                 }
             }
         }
