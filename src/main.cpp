@@ -15,11 +15,6 @@ int main() {
     // Initialize renderer with window dimensions (must be after window/context creation)
     renderer.init(800, 600);
 
-    // Enable face culling for performance
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glFrontFace(GL_CCW);
-
     // Sky blue background
     glClearColor(0.5f, 0.7f, 1.0f, 1.0f);
 
@@ -43,6 +38,9 @@ int main() {
 
     // Main loop
     while (window.isOpen()) {
+        // Poll events FIRST so input is fresh
+        window.update();
+
         // Time
         auto now = clock::now();
         float deltaTime = std::chrono::duration<float>(now - lastTime).count();
@@ -111,7 +109,6 @@ int main() {
         renderer.setViewMatrix(camera.getViewMatrix());
         world.render(renderer.getShaderProgram());
 
-        window.update();
         window.swapBuffers();
     }
 
