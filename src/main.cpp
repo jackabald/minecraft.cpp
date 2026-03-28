@@ -25,8 +25,8 @@ int main() {
     // Camera setup
     Camera camera(glm::vec3(8.0f, 100.0f, 8.0f)); // Start above the terrain
     renderer.setViewMatrix(camera.getViewMatrix());
+    window.enableRawMouse(true);
 
-    bool mouseCaptured = false;
     bool f11Pressed = false;
 
     // World setup
@@ -46,21 +46,9 @@ int main() {
         float deltaTime = std::chrono::duration<float>(now - lastTime).count();
         lastTime = now;
 
-        // ESC: release mouse or quit
+        // ESC: quit
         if (window.isKeyPressed(GLFW_KEY_ESCAPE)) {
-            if (mouseCaptured) {
-                mouseCaptured = false;
-                window.enableRawMouse(false);
-            } else {
-                window.close();
-            }
-        }
-
-        // Click to capture mouse
-        if (glfwGetMouseButton(window.getGLFWwindow(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && !mouseCaptured) {
-            mouseCaptured = true;
-            window.enableRawMouse(true);
-            window.getMouseDelta(); // discard the jump
+            window.close();
         }
 
         // F11: toggle fullscreen
@@ -95,9 +83,9 @@ int main() {
         if (window.isKeyDown(GLFW_KEY_LEFT)) camera.processMouse(-lookSpeed, 0);
         if (window.isKeyDown(GLFW_KEY_RIGHT)) camera.processMouse(lookSpeed, 0);
 
-        // Mouse look (only when captured)
+        // Mouse look
         auto [dx, dy] = window.getMouseDelta();
-        if (mouseCaptured && (dx != 0.0 || dy != 0.0)) {
+        if (dx != 0.0 || dy != 0.0) {
             camera.processMouse(static_cast<float>(dx), static_cast<float>(dy));
         }
 
